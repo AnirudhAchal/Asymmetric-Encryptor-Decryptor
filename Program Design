@@ -1,0 +1,53 @@
+Program Design ->
+
+    I. Person Class ->
+        A. Object Variables
+            1. Friend list
+            2. Private key
+            3. Public key
+            3. Secured symmetric keys / iv for all friends (list)
+            4. List of received messages
+            5. List of sent messages
+            6. Initialize person in global MESSAGES
+        B. Object Methods
+            1. Send message
+            2. Check message
+                a. Involves sending key and receiving key
+                b. Initialize personal messages list in global MESSAGES
+                c. Initialize person in sent and received messages
+            4. Send key
+            5. Receive key
+            6. Delete Friend
+        C. Static Variables
+            1. Public key list
+
+    II. Menu Functions ->
+        A.  Add Person
+            1. Generate Private Key and Public Key
+            2. Initializing friend list
+            3. Adding Public Key to Person Class
+            4. Add a new log in the terminal
+        B. Secure Channel
+            1. Generate a new session key
+            2. Use asymmetric encryption to share and receive key
+            3. Add secure symmetric key to each persons list (Secure key/iv list)
+            4. Add each other to respective friend lists
+        C. Send Message
+            1. Send message
+            2. Add to respective sent and received messages
+            3. Print appropriate messages on both terminal logs
+            4. Add Message to global MESSAGES as receiver -> sender -> messages[]
+        D. Check messages
+            1. Return recent messages
+            2. Clear old messages
+
+    III. Crypt Class ->
+        1. Contains all Functionality of the symmetric encryptor
+            decryptor encapsulated
+        2. Contains all implementation of padding
+        3. Contains Asymmetric encryption functionality for key sharing
+        4. Secure Channel
+            a. Sends key from sender to receiver
+            b. receives key from sender and decrypts and verifies
+    IV. String Class ->
+        1. Add spaces and remove spaces methods
