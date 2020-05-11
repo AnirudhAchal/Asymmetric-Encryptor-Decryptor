@@ -1,4 +1,5 @@
 import os
+from time import sleep
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -117,7 +118,7 @@ class Crypt:
             backend=default_backend()
         )
 
-        check_message = b"Signe message"
+        check_message = b"Signed message"
         try:
             sender_public_key.verify(
                 signature,
@@ -141,6 +142,7 @@ class Crypt:
             alice.delete_friend(bob)
             bob.delete_friend(alice)
             return "Could not secure channel"
+        return "Secured channel"
 
     def __init__(self):
         self.__private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=backend)
@@ -313,8 +315,169 @@ class Person:
             del self.__friends_ivs[friend.name]
 
 
+def new_window():
+    print("\n" * 20)
+
+
+def print_help_menu():
+    print("""
+Help menu ->
+    1 -> Add new person using 'add <name>' command
+    2 -> Add N new people using 'add <name1> <name2> <name3> ... <nameN>' command
+    3 -> To Enter into a specific user use 'select <name>' command
+    4 -> Go to help menu using 'help' command
+    5 -> List all users using 'list' command
+    6 -> Exit the application using 'exit' command
+    """)
+
+
+def print_user_help_menu():
+    print("""
+Help menu ->
+    1 -> Add Friend using 'friend <name>' command
+    2 -> Add multiple friends using 'friend <name1> <name2> <name3> ... <nameN>' command
+    3 -> Check messages using 'check' command
+    4 -> To send a message to a friend use 'send <name> <"message">' command'
+        (Use inverted commas around message)
+    5 -> To delete a friend use 'delete <friend>' command
+    6 -> To go back to main menu using 'main_menu' command
+    7 -> Go to help menu using 'help' command
+    """)
+
+
+def print_main_menu():
+    print('Please enter your commands (enter "help" to check out full command list) ...')
+
+
+def get_command(user):
+    return input(user + '>').split()
+
+
+def enter_user(user, users):
+    while True:
+        cmd = get_command(user.name)
+        if len(cmd) == 1:
+            cmd = cmd[0]
+            if cmd == 'help':
+                print_user_help_menu()
+                continue
+            elif cmd == 'main_menu':
+                return
+            elif cmd == 'check':
+                my_messages = user.check_message()
+                if len(my_messages) == 0:
+                    print("You don't have any new messages!")
+                    continue
+                else:
+                    for friend in my_messages:
+                        print(f"You have {len(my_messages[friend])} new messages from {friend}...")
+                        for message in my_messages[friend]:
+                            print(message)
+                        print("\n")
+
+            else:
+                print('Sorry that is not a command...')
+                print('Enter help to check out commands')
+                continue
+        else:
+            if cmd[0] == 'friend':
+                is_valid = False
+                for friend in cmd[1:]:
+                    is_valid = False
+                    for u in users:
+                        if u.name == friend:
+                            is_valid = True
+                    if not is_valid:
+                        print(f'Sorry {friend} is not a user')
+                        break
+                if not is_valid:
+                    continue
+                for friend in cmd[1:]:
+                    for f in users:
+                        if f.name == friend:
+                            friend = f
+                            break
+                    print(Crypt.secure_channel(user, friend))
+            elif cmd[0] == 'send':
+                if len(cmd) < 3:
+                    print('Sorry that is not a command...')
+                    print('Enter help to check out commands')
+                    continue
+                friend = cmd[1]
+                for f in users:
+                    if f.name == friend:
+                        friend = f
+                        break
+                message = ""
+                for m in cmd[2:]:
+                    message += m
+                    message += " "
+                String.remove_spaces(message)
+                if user.send_message(friend, message) is not None:
+                    print(user.send_message(friend, message))
+                    print("Use friend command to add a new friend.")
+                    continue
+            elif cmd[0] == 'delete':
+                friend = cmd[1]
+                for f in users:
+                    if f.name == friend:
+                        friend = f
+                        break
+                user.delete_friend(friend)
+                continue
+            else:
+                print('Sorry that is not a command...')
+                print('Enter help to check out commands')
+
+
 def main():
-    pass
+    users = []
+    key_words = ['add', 'main_menu', 'friend', 'select', 'check', 'help', 'exit', 'list', 'send', 'delete']
+    print_main_menu()
+    while True:
+        cmd = get_command('main menu')
+        if len(cmd) == 1:
+            cmd = cmd[0]
+            if cmd.lower() == 'exit':
+                print("Thank you for using the application. Have a good day!")
+                sleep(2)
+                exit()
+            elif cmd == 'list':
+                if len(users) == 0:
+                    print("There are not registered users")
+                else:
+                    print("All Registered users are...")
+
+                for user in users:
+                    print(f"{users.index(user) + 1} -> ", user.name)
+            elif cmd == 'help':
+                print_help_menu()
+                continue
+            else:
+                print("Sorry that is not a command...")
+                print('Enter help to check out commands')
+                continue
+        else:
+            if cmd[0].lower() == 'select':
+                name = cmd[1]
+                for user in users:
+                    if user.name == name:
+                        name = user
+                        break
+                enter_user(name, users)
+            elif cmd[0].lower() == 'add':
+                is_valid = True
+                for name in cmd[1:]:
+                    if name in key_words:
+                        is_valid = False
+                        print(f"Sorry can't use name : {name}")
+                if is_valid:
+                    for person in cmd[1:]:
+                        users.append(Person(person))
+            else:
+                print("Sorry that is not a command...")
+                print('Enter help to check out commands')
+                continue
 
 
 if __name__ == '__main__':

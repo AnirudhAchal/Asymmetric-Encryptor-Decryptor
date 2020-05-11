@@ -51,3 +51,22 @@ Program Design ->
             b. receives key from sender and decrypts and verifies
     IV. String Class ->
         1. Add spaces and remove spaces methods
+
+    V. Help menu (Explains commands) ->
+        1. Add new person using 'add <name>' command
+        2. To Enter into a specific user use 'select <name>' command
+        3. Go to help menu using 'help' command
+        4. List all users using 'list' command
+        5. Exit the application using 'exit' command
+
+        Enter any key to exit this menu
+
+    VI. Help menu (Explains user commands) ->
+        1. Add Friend using 'friend <name>' command
+        2. Add multiple friends using 'friend <name1> <name2> <name3> ... <nameN>' command
+        3. Check messages using 'check' command
+        4. To send a message to a friend use 'send <name> <"message">' command'
+           (Use inverted commas around message)
+        5. To delete a friend use 'delete <friend>' command
+        6. To go back to main menu using 'main_menu' command
+        7. Go to help menu using 'help' command
