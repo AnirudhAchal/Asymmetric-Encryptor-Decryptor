@@ -141,8 +141,8 @@ class Crypt:
         if bob.receive_session_key(alice) is not None:
             alice.delete_friend(bob)
             bob.delete_friend(alice)
-            return "Could not secure channel"
-        return "Secured channel"
+            return "Could not establish secure channel"
+        return "Secured channel established..."
 
     def __init__(self):
         self.__private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=backend)
@@ -460,11 +460,14 @@ def main():
         else:
             if cmd[0].lower() == 'select':
                 name = cmd[1]
+                is_valid = False
                 for user in users:
                     if user.name == name:
+                        is_valid = True
                         name = user
                         break
-                enter_user(name, users)
+                if is_valid:
+                    enter_user(name, users)
             elif cmd[0].lower() == 'add':
                 is_valid = True
                 for name in cmd[1:]:
@@ -474,6 +477,8 @@ def main():
                 if is_valid:
                     for person in cmd[1:]:
                         users.append(Person(person))
+                else:
+                    print(f'Sorry {name} is not a registered user...')
             else:
                 print("Sorry that is not a command...")
                 print('Enter help to check out commands')
