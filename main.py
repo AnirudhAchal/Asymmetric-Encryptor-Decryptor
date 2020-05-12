@@ -520,7 +520,7 @@ def main():
                 sleep(0.25)
                 is_valid = True
                 for name in cmd[1:]:
-                    if name in key_words:
+                    if name.lower() in key_words:
                         is_valid = False
                         print(f"Sorry can't use name : {name}")
                 if is_valid:
