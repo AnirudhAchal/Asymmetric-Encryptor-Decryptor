@@ -47,7 +47,7 @@ class Crypt:
         return message
 
     @classmethod
-    def encrypt_key(cls, sender_pem_private_key, receiver_pem_public_key, key, iv):
+    def encrypt_key(cls, sender_pem_private_key, receiver_pem_public_key, key, iv, user):
         receiver_public_key = serialization.load_pem_public_key(
             receiver_pem_public_key,
             backend=default_backend()
@@ -75,7 +75,7 @@ class Crypt:
             backend=default_backend()
         )
 
-        message = b"Signed message"
+        message = f"Signed message from {user.name}".encode()
         signature = sender_private_key.sign(
             message,
             padding.PSS(
@@ -88,7 +88,8 @@ class Crypt:
         return key_cipher_text, iv_cipher_text, signature
 
     @classmethod
-    def decrypt_key(cls, sender_pem_public_key, receiver_pem_private_key, key_cipher_text, iv_cipher_text, signature):
+    def decrypt_key(cls, sender_pem_public_key, receiver_pem_private_key,
+                    key_cipher_text, iv_cipher_text, signature, sender):
         receiver_private_key = serialization.load_pem_private_key(
             receiver_pem_private_key,
             password=None,
@@ -118,7 +119,7 @@ class Crypt:
             backend=default_backend()
         )
 
-        check_message = b"Signed message"
+        check_message = f"Signed message from {sender.name}".encode()
         try:
             sender_public_key.verify(
                 signature,
@@ -141,8 +142,8 @@ class Crypt:
         if bob.receive_session_key(alice) is not None:
             alice.delete_friend(bob)
             bob.delete_friend(alice)
-            return "Could not establish secure channel"
-        return "Secured channel established..."
+            return "Digital signature not matching...\nCould not establish secure channel...\n"
+        return "Secured channel successfully established...\n"
 
     def __init__(self):
         self.__private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=backend)
@@ -254,6 +255,9 @@ class Person:
         key = os.urandom(32)
         iv = os.urandom(16)
 
+        print("Generating session key...")
+        sleep(0.25)
+
         self.__friends_keys[friend.name] = key
         self.__friends_ivs[friend.name] = iv
 
@@ -262,13 +266,19 @@ class Person:
 
         # Encrypting the key
         key_cipher_text, iv_cipher_text, signature = Crypt.encrypt_key(sender_pem_private_key,
-                                                                       receiver_pem_public_key, key, iv)
-
+                                                                       receiver_pem_public_key, key, iv, self)
+        print("encrypting session key...")
+        sleep(0.5)
         # Adding key, iv and signatures to the Global messages
         MESSAGES[friend.name][self.name] = []
         MESSAGES[friend.name][self.name].append(key_cipher_text)
         MESSAGES[friend.name][self.name].append(iv_cipher_text)
         MESSAGES[friend.name][self.name].append(signature)
+
+        print(f"sending session key to {friend.name}...")
+        sleep(0.5)
+        print("encrypted key successfully sent...")
+        sleep(0.25)
 
     def receive_session_key(self, friend):
         # Initializing dictionaries
@@ -276,6 +286,8 @@ class Person:
         self.__sent_messages[friend.name] = []
         self.__received_messages[friend.name] = []
 
+        print(f"{self.name} successfully received key...")
+        sleep(0.25)
         # Encrypted key, iv and signature
         key_cipher_text = MESSAGES[self.name][friend.name][0]
         iv_cipher_text = MESSAGES[self.name][friend.name][1]
@@ -284,13 +296,18 @@ class Person:
         # Emptying messages
         MESSAGES[self.name][friend.name] = []
 
+        print(f"decrypting session key...")
+        sleep(0.5)
+
         # If key was sent by someone other than the intended person
         if (Crypt.decrypt_key(friend.pem_public_key,
-                              self.__pem_private_key, key_cipher_text, iv_cipher_text, signature) is False):
+                              self.__pem_private_key, key_cipher_text, iv_cipher_text, signature, friend) is False):
             return f"Key is not from {friend.name}. This channel is not secure"
 
+        print(f"digital signature verified")
+
         key, iv = Crypt.decrypt_key(friend.pem_public_key,
-                                    self.__pem_private_key, key_cipher_text, iv_cipher_text, signature)
+                                    self.__pem_private_key, key_cipher_text, iv_cipher_text, signature, friend)
 
         # Adding friend to friends list
         self.__friends.append(friend.name)
@@ -337,8 +354,7 @@ Help menu ->
     1 -> Add Friend using 'friend <name>' command
     2 -> Add multiple friends using 'friend <name1> <name2> <name3> ... <nameN>' command
     3 -> Check messages using 'check' command
-    4 -> To send a message to a friend use 'send <name> <"message">' command'
-        (Use inverted commas around message)
+    4 -> To send a message to a friend use 'send <name> <message>' command (spaces allowed)
     5 -> To delete a friend use 'delete <friend>' command
     6 -> To go back to main menu using 'main_menu' command
     7 -> Go to help menu using 'help' command
@@ -354,8 +370,12 @@ def get_command(user):
 
 
 def enter_user(user, users):
+    sleep(0.25)
+    print(f'\nLogged in as {user.name}...\n')
     while True:
         cmd = get_command(user.name)
+        if len(cmd) == 0:
+            continue
         if len(cmd) == 1:
             cmd = cmd[0]
             if cmd == 'help':
@@ -364,6 +384,8 @@ def enter_user(user, users):
             elif cmd == 'main_menu':
                 return
             elif cmd == 'check':
+                print("\nChecking for new messages...")
+                sleep(0.5)
                 my_messages = user.check_message()
                 if len(my_messages) == 0:
                     print("You don't have any new messages!")
@@ -373,7 +395,7 @@ def enter_user(user, users):
                         print(f"You have {len(my_messages[friend])} new messages from {friend}...")
                         for message in my_messages[friend]:
                             print(message)
-                        print("\n")
+                        print()
 
             else:
                 print('Sorry that is not a command...')
@@ -381,22 +403,31 @@ def enter_user(user, users):
                 continue
         else:
             if cmd[0] == 'friend':
-                is_valid = False
+                print('\nSearching for users...')
+                sleep(2)
+                is_all_valid = True
                 for friend in cmd[1:]:
                     is_valid = False
                     for u in users:
                         if u.name == friend:
                             is_valid = True
                     if not is_valid:
-                        print(f'Sorry {friend} is not a user')
-                        break
-                if not is_valid:
+                        print(f'{friend} is not a user...')
+                        sleep(1)
+                    if friend == user.name:
+                        print('Cannot friend yourself...')
+                        sleep(1)
+                        is_valid = False
+                    is_all_valid = is_valid and is_all_valid
+                if not is_all_valid:
                     continue
                 for friend in cmd[1:]:
                     for f in users:
                         if f.name == friend:
                             friend = f
                             break
+                    print(f"\nAttempting to establish secure connection with {friend.name}")
+                    sleep(1)
                     print(Crypt.secure_channel(user, friend))
             elif cmd[0] == 'send':
                 if len(cmd) < 3:
@@ -417,6 +448,9 @@ def enter_user(user, users):
                     print(user.send_message(friend, message))
                     print("Use friend command to add a new friend.")
                     continue
+                print(f"Sending message to {friend.name}...")
+                sleep(0.5)
+                print("message sent successfully...\n")
             elif cmd[0] == 'delete':
                 friend = cmd[1]
                 for f in users:
@@ -424,6 +458,9 @@ def enter_user(user, users):
                         friend = f
                         break
                 user.delete_friend(friend)
+                print(f"Deleting user {friend.name} from friend list...")
+                sleep(0.5)
+                print("Process successfully completed...\n")
                 continue
             else:
                 print('Sorry that is not a command...')
@@ -436,6 +473,8 @@ def main():
     print_main_menu()
     while True:
         cmd = get_command('main menu')
+        if len(cmd) == 0:
+            continue
         if len(cmd) == 1:
             cmd = cmd[0]
             if cmd.lower() == 'exit':
@@ -443,13 +482,16 @@ def main():
                 sleep(2)
                 exit()
             elif cmd == 'list':
+                print("\nGetting users...")
+                sleep(1)
                 if len(users) == 0:
-                    print("There are not registered users")
+                    print("There are no registered users\n")
                 else:
                     print("All Registered users are...")
 
                 for user in users:
                     print(f"{users.index(user) + 1} -> ", user.name)
+                print()
             elif cmd == 'help':
                 print_help_menu()
                 continue
@@ -468,7 +510,14 @@ def main():
                         break
                 if is_valid:
                     enter_user(name, users)
+                else:
+                    print(f'Sorry {name} is not a registered user...')
             elif cmd[0].lower() == 'add':
+                if len(cmd[1:]) == 1:
+                    print(f"Registering user...")
+                else:
+                    print(f"Registering users...")
+                sleep(0.25)
                 is_valid = True
                 for name in cmd[1:]:
                     if name in key_words:
@@ -476,9 +525,15 @@ def main():
                         print(f"Sorry can't use name : {name}")
                 if is_valid:
                     for person in cmd[1:]:
-                        users.append(Person(person))
-                else:
-                    print(f'Sorry {name} is not a registered user...')
+                        for user in users:
+                            if user.name == person:
+                                print(f"{person} already registered...")
+                                sleep(0.5)
+                                break
+                        else :
+                            users.append(Person(person))
+                            print(f"{person} successfully registered...")
+                            sleep(0.125)
             else:
                 print("Sorry that is not a command...")
                 print('Enter help to check out commands')
@@ -487,3 +542,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+

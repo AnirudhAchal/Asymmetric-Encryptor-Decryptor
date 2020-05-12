@@ -65,8 +65,7 @@ Program Design ->
         1. Add Friend using 'friend <name>' command
         2. Add multiple friends using 'friend <name1> <name2> <name3> ... <nameN>' command
         3. Check messages using 'check' command
-        4. To send a message to a friend use 'send <name> <"message">' command'
-           (Use inverted commas around message)
+        4. To send a message to a friend use 'send <name> <message>' command
         5. To delete a friend use 'delete <friend>' command
         6. To go back to main menu using 'main_menu' command
         7. Go to help menu using 'help' command
