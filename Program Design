@@ -21,7 +21,7 @@ Program Design ->
         C. Static Variables
             1. Public key list
 
-    II. Menu Functions ->
+    II.User Functions ->
         A.  Add Person
             1. Generate Private Key and Public Key
             2. Initializing friend list
@@ -49,6 +49,7 @@ Program Design ->
         4. Secure Channel
             a. Sends key from sender to receiver
             b. receives key from sender and decrypts and verifies
+
     IV. String Class ->
         1. Add spaces and remove spaces methods
 

@@ -536,7 +536,7 @@ def main():
                                 print(f"{person} already registered...")
                                 sleep(0.5)
                                 break
-                        else :
+                        else:
                             users.append(Person(person))
                             print(f"{person} successfully registered...")
                             sleep(0.125)
@@ -550,5 +550,4 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-
+# Version 1.0
