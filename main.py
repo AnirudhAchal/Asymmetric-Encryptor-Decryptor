@@ -143,7 +143,7 @@ class Crypt:
             alice.delete_friend(bob)
             bob.delete_friend(alice)
             return "Digital signature not matching...\nCould not establish secure channel...\n"
-        return "Secured channel successfully established...\n"
+        return f"Secured channel successfully established with {bob.name}...\n"
 
     def __init__(self):
         self.__private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=backend)
@@ -205,11 +205,11 @@ class Person:
 
         # If an empty object is passed
         if receiver is None:
-            return "Error...Trying to send a message to Undefined Person."
+            return "\nError...Trying to send a message to Undefined Person.\n"
 
         # If secure channel is not yet established
         if receiver.name not in self.__friends:
-            return f"Secure channel is not yet established with {receiver.name}."
+            return f"\nSecure channel is not yet established with {receiver.name}."
 
         key = self.__friends_keys[receiver.name]
         iv = self.__friends_ivs[receiver.name]
@@ -384,11 +384,11 @@ def enter_user(user, users):
             elif cmd == 'main_menu':
                 return
             elif cmd == 'check':
-                print("\nChecking for new messages...")
+                print("\nChecking for new messages...\n")
                 sleep(0.5)
                 my_messages = user.check_message()
                 if len(my_messages) == 0:
-                    print("You don't have any new messages!")
+                    print("You don't have any new messages!\n")
                     continue
                 else:
                     for friend in my_messages:
@@ -398,12 +398,12 @@ def enter_user(user, users):
                         print()
 
             else:
-                print('Sorry that is not a command...')
-                print('Enter help to check out commands')
+                print('\nSorry that is not a command...')
+                print('Enter help to check out commands\n')
                 continue
         else:
             if cmd[0] == 'friend':
-                print('\nSearching for users...')
+                print('\nSearching for users...\n')
                 sleep(2)
                 is_all_valid = True
                 for friend in cmd[1:]:
@@ -426,19 +426,25 @@ def enter_user(user, users):
                         if f.name == friend:
                             friend = f
                             break
-                    print(f"\nAttempting to establish secure connection with {friend.name}")
+                    print(f"Attempting to establish secure connection with {friend.name}")
                     sleep(1)
                     print(Crypt.secure_channel(user, friend))
             elif cmd[0] == 'send':
                 if len(cmd) < 3:
-                    print('Sorry that is not a command...')
-                    print('Enter help to check out commands')
+                    print('\nSorry that is not a command...')
+                    print('Enter help to check out commands\n')
                     continue
                 friend = cmd[1]
+                if friend == user.name:
+                    print("\nCan't send a message to yourself...\n")
+                    continue
                 for f in users:
                     if f.name == friend:
                         friend = f
                         break
+                else:
+                    print(f"\n{friend} is not a registered user...\n")
+                    continue
                 message = ""
                 for m in cmd[2:]:
                     message += m
@@ -446,9 +452,9 @@ def enter_user(user, users):
                 String.remove_spaces(message)
                 if user.send_message(friend, message) is not None:
                     print(user.send_message(friend, message))
-                    print("Use friend command to add a new friend.")
+                    print("Use friend command to add a new friend.\n")
                     continue
-                print(f"Sending message to {friend.name}...")
+                print(f"\nSending message to {friend.name}...")
                 sleep(0.5)
                 print("message sent successfully...\n")
             elif cmd[0] == 'delete':
@@ -458,13 +464,13 @@ def enter_user(user, users):
                         friend = f
                         break
                 user.delete_friend(friend)
-                print(f"Deleting user {friend.name} from friend list...")
+                print(f"\nDeleting {friend.name} from friend list...")
                 sleep(0.5)
                 print("Process successfully completed...\n")
                 continue
             else:
-                print('Sorry that is not a command...')
-                print('Enter help to check out commands')
+                print('\nSorry that is not a command...')
+                print('Enter help to check out commands\n')
 
 
 def main():
@@ -485,9 +491,9 @@ def main():
                 print("\nGetting users...")
                 sleep(1)
                 if len(users) == 0:
-                    print("There are no registered users\n")
+                    print("There are no registered users")
                 else:
-                    print("All Registered users are...")
+                    print("\nAll Registered users are...")
 
                 for user in users:
                     print(f"{users.index(user) + 1} -> ", user.name)
@@ -496,8 +502,8 @@ def main():
                 print_help_menu()
                 continue
             else:
-                print("Sorry that is not a command...")
-                print('Enter help to check out commands')
+                print("\nSorry that is not a command...")
+                print('Enter help to check out commands\n')
                 continue
         else:
             if cmd[0].lower() == 'select':
@@ -514,15 +520,15 @@ def main():
                     print(f'Sorry {name} is not a registered user...')
             elif cmd[0].lower() == 'add':
                 if len(cmd[1:]) == 1:
-                    print(f"Registering user...")
+                    print(f"\nRegistering user...")
                 else:
-                    print(f"Registering users...")
+                    print(f"\nRegistering users...")
                 sleep(0.25)
                 is_valid = True
                 for name in cmd[1:]:
                     if name.lower() in key_words:
                         is_valid = False
-                        print(f"Sorry can't use name : {name}")
+                        print(f"Sorry can't use {name} as a user name")
                 if is_valid:
                     for person in cmd[1:]:
                         for user in users:
@@ -534,9 +540,10 @@ def main():
                             users.append(Person(person))
                             print(f"{person} successfully registered...")
                             sleep(0.125)
+                    print()
             else:
-                print("Sorry that is not a command...")
-                print('Enter help to check out commands')
+                print("\nSorry that is not a command...")
+                print('Enter help to check out commands\n')
                 continue
 
 
