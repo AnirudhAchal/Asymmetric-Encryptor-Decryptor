@@ -37,9 +37,11 @@ Program Design ->
             2. Add to respective sent and received messages
             3. Print appropriate messages on both terminal logs
             4. Add Message to global MESSAGES as receiver -> sender -> messages[]
+            5. Send Hashed Message for verification
         D. Check messages
             1. Return recent messages
-            2. Clear old messages
+            2. Checks if hash of decrypted message matches the hash sent
+            3. Clear old messages
 
     III. Crypt Class ->
         1. Contains all Functionality of the symmetric encryptor

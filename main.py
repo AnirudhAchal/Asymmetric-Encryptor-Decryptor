@@ -214,10 +214,17 @@ class Person:
         key = self.__friends_keys[receiver.name]
         iv = self.__friends_ivs[receiver.name]
 
+        # Encrypting message
         cipher_text = Crypt.encrypt(key, iv, message)
 
-        # Adding message to global MESSAGES as Receiver -> Sender -> Messages[]
-        MESSAGES[receiver.name][self.name].append(cipher_text)
+        # Hashing message
+        digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
+        message = String.remove_spaces(message)
+        digest.update(message.encode('utf-8'))
+        hash_message = digest.finalize()
+
+        # Adding message to global MESSAGES as Receiver -> Sender -> Messages[] along with hashed message
+        MESSAGES[receiver.name][self.name].append([cipher_text, hash_message])
 
         # Adding messages to sent messages
         self.__sent_messages[receiver.name].append(message)
@@ -231,8 +238,15 @@ class Person:
 
             # Decrypting all of messages sent by friend and adding to received messages
             for message in MESSAGES[self.name][friend]:
-                decrypted_message = Crypt.decrypt(key, iv, message)
-                self.__received_messages[friend].append(decrypted_message)
+                decrypted_message = Crypt.decrypt(key, iv, message[0])
+
+                # Hashing decrypted message
+                digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
+                digest.update(decrypted_message.encode())
+
+                # Checking if hashes match
+                if digest.finalize() == message[1]:
+                    self.__received_messages[friend].append(decrypted_message)
 
         my_new_messages = self.__received_messages.copy()
 
